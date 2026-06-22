@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from models import Product, Category, Supplier, StockMovement, MovementType
 import models
 
 def calculate_stock(db: Session, product_id: int) -> int:
@@ -66,3 +67,5 @@ def calculate_warehouse_value(db: Session):
         total_profit_val += stock * (p.selling_price - p.purchase_price)
 
     return total_purchase_val, total_selling_val, total_profit_val
+
+
