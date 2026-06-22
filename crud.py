@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from models import StockMovement, MovementType
 import models
 
 
@@ -122,3 +123,40 @@ def delete_product(db: Session, product_id: int):
         db.commit()
         return True
     return False
+
+
+def create_stock_movement(db: Session, product_id: int, movement_type: str, quantity: int, comment: str = None):
+    if quantity <= 0:
+        raise ValueError("Количество должно быть больше 0")
+    try:
+        movement = StockMovement(
+            product_id=product_id,
+            movement_type=MovementType(movement_type),
+            quantity=quantity,
+            comment=comment
+        )
+
+        db.add(movement)
+        db.commit()
+        db.refresh(movement)
+        return movement
+    except IntegrityError:
+        db.rollback()
+        raise ValueError("Ошибка целостности данных")
+    except ValueError as e:
+        if "is not a valid" in str(e):
+            raise ValueError(f"Неверный тип движения")
+        raise e
+    
+def get_all_stock_movements(db: Session):
+    return db.query(StockMovement).all()
+
+def get_movements_by_product(db: Session, product_id: int):
+    return db.query(StockMovement).filter(StockMovement.product_id == product_id).all()
+
+def delete_stock_movement(db: Session, movement_id: int):
+    movement = db.query(StockMovement).filter(StockMovement.id == movement_id).first()
+    if not movement:
+        raise ValueError("Операция не найдена")
+    db.delete(movement)
+    db.commit()
